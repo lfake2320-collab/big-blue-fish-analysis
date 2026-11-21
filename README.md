@@ -21,11 +21,16 @@
 
 **重要：**之前的会话曾描述过 EXE 大小、ASAR 大小、Electron Fuses 等检查结果，但本仓库目前没有原始命令输出或文件证据。因此这些内容暂列为“待复核”，不能直接当成最终结论。
 
+## 最重要的部分：ChatGPT ↔ REA MCP 连接
+
+本项目最核心的基础设施是 ChatGPT 能否通过 OpenAI Secure MCP Tunnel 稳定调用本机 REA。请优先阅读 [连接完整手册](docs/03A-ChatGPT连接REA完整手册.md)。其中记录了组件架构、端口和路径、启动脚本逻辑、密钥权限、安全边界、实际连通验证、启动顺序和故障排查。
+
 ## 目录导航
 
 - [项目概况](docs/01-项目概况.md)：程序位置、目标和边界
 - [分析环境搭建记录](docs/02-分析环境搭建记录.md)：REA、Ghidra、Java、Node.js
-- [连接过程记录](docs/03-ChatGPT连接REA记录.md)：本机 MCP 和安全隧道
+- [ChatGPT ↔ REA 连接完整手册](docs/03A-ChatGPT连接REA完整手册.md)：核心文档，详细记录 ChatGPT 如何通过 OpenAI Secure MCP Tunnel 调用本机 REA
+- [连接过程简要记录](docs/03-ChatGPT连接REA记录.md)：连接概览
 - [已知发现与证据等级](docs/04-已知发现与待复核.md)：哪些确认了，哪些还只是线索
 - [后续分析计划](docs/05-后续分析计划.md)：下一步按什么顺序查
 - [安全与隐私说明](docs/06-安全与隐私.md)：哪些东西不能上传
