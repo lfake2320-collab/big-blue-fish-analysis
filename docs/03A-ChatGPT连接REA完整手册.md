@@ -329,3 +329,96 @@ Tailscale 不是 ChatGPT 云端访问本机 REA 的替代通道。
 | 大肥鱼 EXE 深度分析 | 尚未在本文件中证明完成 | 后续单独记录分析证据 |
 
 **最重要的结论：**我们已经有过一次真实的 ChatGPT → REA 工具调用成功记录。后续应优先确保这条连接稳定、重启后可恢复，并把每次连接验证结果记录下来。只有这条基础设施稳定，才能持续让 ChatGPT 帮忙分析本机的大肥鱼程序。
+
+
+## 13. 换 ChatGPT 账号后还能不能连接？（非常重要）
+
+这个问题要把“本机 REA 服务”和“ChatGPT 账号是否有权使用 Tunnel”分开看。
+
+### 13.1 先说结论
+
+**换一个 ChatGPT 账号，不代表本机 REA 必须重装，也不代表 Tunnel 一定要重新创建。**但是，新账号不会因为知道旧账号的 Tunnel ID，就自动获得使用权限。
+
+OpenAI Secure MCP Tunnel 的官方说明明确区分了：
+- Platform 组织层面的 Tunnel 权限。
+- ChatGPT 工作区对自定义 MCP App 的权限。
+- Tunnel 与 Platform 组织、ChatGPT 工作区之间的关联。
+
+Tunnel 可以关联一个或多个 Platform 组织和 ChatGPT 工作区。新账号要能使用它，必须处在已关联、且权限允许的目标上下文中。个人账号通常要关联该账号所属的 Platform 个人组织；企业工作区也需要正确关联到目标工作区。参考官方文档：  
+https://developers.openai.com/api/docs/guides/secure-mcp-tunnels
+
+### 13.2 换账号时哪些东西不变？
+
+只要用户电脑和服务配置没有变化，以下本机部分通常不需要重装：
+
+- 大肥鱼程序本身。
+- REA Runtime 和 REA MCP Server。
+- REA 本地地址：`http://127.0.0.1:8765/mcp`。
+- Tunnel Client 二进制和 Profile。
+- 本机启动脚本。
+- 本机目标文件路径。
+
+这些东西都运行在用户电脑上，不是 ChatGPT 登录账号里的文件。
+
+### 13.3 哪些东西可能需要重新配置或授权？
+
+换账号后，重点检查：
+
+1. 新账号对应的 Platform 个人组织是否拥有该 Tunnel 的 Tunnels Read + Use 权限。
+2. Tunnel 是否关联到新账号要使用的 ChatGPT 工作区。
+3. 新账号是否允许创建和使用自定义 MCP Server。
+4. 新账号能否在 Plugins / Apps 的自定义 MCP 连接页面看到该 Tunnel，或手动填入 tunnel_id 后通过权限校验。
+5. 新账号是否需要重新添加一次自定义 MCP App，并完成风险确认和工具发现。
+
+官方文档特别指出：Platform Tunnel 权限与 ChatGPT 自定义 MCP Server 权限是分开的；Tunnel 只关联 Platform 个人组织，并不会自动出现在任意 Enterprise/Edu 工作区。  
+参考：https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
+
+### 13.4 Runtime API Key 和 ChatGPT 账号不是一回事
+
+要分清这三个东西：
+
+- `tunnel_id`：标识“连接哪一条 Tunnel”。
+- Runtime API Key：让本机长期运行的 tunnel-client 向 OpenAI Tunnel 控制平面认证。
+- ChatGPT 自定义 MCP App：让某个 ChatGPT 账号或工作区能够使用这条 Tunnel。
+
+所以只把 tunnel_id 复制给另一个账号，不等于授权完成。也不要为了换 ChatGPT 账号，就把 Runtime API Key 发给另一个人或贴进聊天。
+
+### 13.5 为什么 COPT 看起来可以直接用？
+
+COPT 和这里的 REA 接入方式不一样。
+
+当前环境中的 COPT 工具是由 ChatGPT 工具层直接提供的一组本地开发工作区能力，例如打开工作区、读取文件、搜索代码、编辑文件和运行受控命令。它不是用户自己在 ChatGPT 里添加的那条 REA 自定义 MCP Tunnel。
+
+因此两者差别是：
+
+| 对比 | COPT | REA |
+|---|---|---|
+| 工具从哪里来 | 当前 ChatGPT 环境已经提供的工具集成 | 用户自己的本机 REA MCP 服务 |
+| 是否需要用户单独配置本机 Tunnel | 当前 COPT 工具调用不需要 | 需要 Secure MCP Tunnel |
+| 是否直接依赖本机 REA 服务 | 否 | 是 |
+| 换 ChatGPT 账号 | 取决于新账号/环境是否也提供 COPT 工具权限 | 需要新账号/工作区获得 Tunnel 关联和使用权限 |
+| 能否据此判断另一个账号也能用 | 不能保证 | 不能保证 |
+
+**特别注意：**COPT 在当前对话里可用，只能证明当前 ChatGPT 会话获得了 COPT 工具能力，不能推断任何其他 ChatGPT 账号登录后都会自动获得 COPT。COPT 是否跨账号可用，要看目标账号的产品权限和工具配置。
+
+### 13.6 换账号的正确测试流程
+
+不要先删旧配置，也不要先重装本机 REA。建议：
+
+1. 保持本机 REA MCP 服务运行。
+2. 保持 tunnel-client 使用现有 Profile 正常运行。
+3. 登录目标 ChatGPT 账号。
+4. 检查目标账号是否能创建自定义 MCP Server。
+5. 检查目标账号对应的 Platform 组织是否有 Tunnels Read + Use。
+6. 确认 Tunnel 已关联到目标 ChatGPT 工作区。
+7. 在目标账号中添加自定义 MCP Server，选择 Connection: Tunnel，选取或输入现有 tunnel_id。
+8. 完成连接后，调用一个安全的只读 REA 工具。
+9. 只有当目标账号真实收到 REA 的工具响应，才算换账号连接成功。
+
+如果目标账号没有权限，应该先处理 Platform 组织权限和 Workspace 关联，不要先重装 REA 或反复更换本机端口。
+
+### 13.7 官方说明
+
+- Secure MCP Tunnel： https://developers.openai.com/api/docs/guides/secure-mcp-tunnels
+- ChatGPT 自定义 MCP Server 连接说明： https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
+
